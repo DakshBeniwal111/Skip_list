@@ -1,0 +1,215 @@
+import java.util.*;
+import java.lang.Math;
+
+class Node {
+    int data;
+    Node[] next;
+
+    Node(int data, int level) {
+        this.data = data;
+        next = new Node[level + 1];
+    }
+}
+
+class SkipList {
+    int level;
+    Node header;
+    int size;
+    int MAX_LEVEL;
+
+    SkipList(int maxElements) {
+        MAX_LEVEL = (int) Math.ceil(Math.log(maxElements) / Math.log(2));
+
+        header = new Node(Integer.MAX_VALUE, MAX_LEVEL);
+
+        for (int i = 0; i <= MAX_LEVEL; i++) {
+            header.next[i] = header;
+        }
+
+        level = 1;
+        size = 0;
+    }
+
+    int randLevel() {
+        int lvl = 1;
+        Random rand = new Random();
+
+        while (rand.nextInt(Integer.MAX_VALUE) < Integer.MAX_VALUE / 2 && lvl < MAX_LEVEL) {
+            lvl++;
+        }
+
+        return lvl;
+    }
+
+    void insert(int data) {
+        Node x = header;
+        Node[] update = new Node[MAX_LEVEL + 1];
+
+        for (int i = level; i >= 1; i--) {
+            while (x.next[i] != header && x.next[i].data < data)
+                x = x.next[i];
+            update[i] = x;
+        }
+
+        x = x.next[1];
+
+        if (x != header && x.data == data) {
+            System.out.println("Duplicate element.");
+            return;
+        }
+
+        int lvl = randLevel();
+
+        if (lvl > level) {
+            for (int i = level + 1; i <= lvl; i++)
+                update[i] = header;
+            level = lvl;
+        }
+
+        Node newNode = new Node(data, lvl);
+
+        for (int i = 1; i <= lvl; i++) {
+            newNode.next[i] = update[i].next[i];
+            update[i].next[i] = newNode;
+        }
+
+        size++;
+    }
+
+    boolean search(int data) {
+        Node x = header;
+
+        for (int i = level; i >= 1; i--) {
+            while (x.next[i] != header && x.next[i].data < data)
+                x = x.next[i];
+        }
+
+        x = x.next[1];
+
+        return (x != header && x.data == data);
+    }
+
+    void delete(int data) {
+        Node[] update = new Node[MAX_LEVEL + 1];
+        Node x = header;
+
+        for (int i = level; i >= 1; i--) {
+            while (x.next[i] != header && x.next[i].data < data)
+                x = x.next[i];
+            update[i] = x;
+        }
+
+        x = x.next[1];
+
+        if (x != header && x.data == data) {
+
+            for (int i = 1; i <= level; i++) {
+                if (update[i].next[i] != x)
+                    break;
+                update[i].next[i] = x.next[i];
+            }
+
+            while (level > 1 && header.next[level] == header)
+                level--;
+
+            size--;
+            System.out.println("Element Deleted.");
+        } else {
+            System.out.println("Element not present.");
+        }
+    }
+
+    void display() {
+        for (int i = 1; i <= MAX_LEVEL; i++) {
+            Node x = header;
+            System.out.print("LEVEL " + i + ": ");
+
+            while (x.next[i] != header) {
+                System.out.print(x.next[i].data + " -> ");
+                x = x.next[i];
+            }
+
+            System.out.println("NULL");
+        }
+    }
+
+    int getSize() {
+        return size;
+    }
+}
+
+public class SkipListDemo {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter the maximum number of elements in the list: ");
+        int maxNum = sc.nextInt();
+
+        SkipList sl = new SkipList(maxNum);
+
+        while (true) {
+
+            System.out.println("\n-----------------------");
+            System.out.println("Operations on Skip List");
+            System.out.println("-----------------------");
+            System.out.println("1. Insert Element");
+            System.out.println("2. Search Element");
+            System.out.println("3. Delete Element");
+            System.out.println("4. Display List");
+            System.out.println("5. Exit");
+
+            System.out.print("Enter your choice: ");
+            int choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+
+                    if (sl.getSize() == maxNum) {
+                        System.out.println("Skip List Full");
+                        break;
+                    }
+
+                    System.out.print("Enter element to insert: ");
+                    int insertValue = sc.nextInt();
+                    sl.insert(insertValue);
+                    break;
+
+                case 2:
+
+                    System.out.print("Enter element to search: ");
+                    int searchValue = sc.nextInt();
+
+                    if (sl.search(searchValue))
+                        System.out.println(searchValue + " is present.");
+                    else
+                        System.out.println("Element not present.");
+
+                    break;
+
+                case 3:
+
+                    System.out.print("Enter element to delete: ");
+                    int deleteValue = sc.nextInt();
+                    sl.delete(deleteValue);
+                    break;
+
+                case 4:
+
+                    System.out.println("Number of elements: " + sl.getSize());
+                    sl.display();
+                    break;
+
+                case 5:
+
+                    System.exit(0);
+
+                default:
+
+                    System.out.println("Invalid Choice.");
+            }
+        }
+    }
+}
